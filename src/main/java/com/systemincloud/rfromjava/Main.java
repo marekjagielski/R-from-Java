@@ -1,5 +1,15 @@
 package com.systemincloud.rfromjava;
 
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+
+import javax.imageio.ImageIO;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 
@@ -18,20 +28,48 @@ import de.walware.rj.servi.pool.RServiImplE;
 import de.walware.rj.servi.pool.RServiNodeConfig;
 import de.walware.rj.servi.pool.RServiNodeFactory;
 import de.walware.rj.services.FunctionCall;
+import de.walware.rj.services.utils.Graphic;
+import de.walware.rj.services.utils.PngGraphic;
 
-public class Main {
+public class Main extends JFrame {
 
-	public static String R_PATH = "/usr/local/lib/R";
+	private static final long serialVersionUID = 1L;
+
+	public static String R_PATH  = "/usr/local/lib/R";
+	public static String RJ_PATH = "/home/marek/R/x86_64-pc-linux-gnu-library/3.2/rj";
+
+	private RServi fRservi;
+
+	private JPanel mainPane;
+	private JPanel gPanel;
+
+	private static int w = 300;
+	private static int h = 300;
 
 	public static void main(String[] args) {
 		System.out.println("START");
+		new Main().run();
+		System.out.println("END");
+	}
+
+	private void run() {
+		setSize(w, h);
+		mainPane = new JPanel();
+		mainPane.setPreferredSize(new Dimension(w, h));
+		mainPane.setLayout(new BorderLayout(0, 0));
+		setContentPane(mainPane);
+		r();
+		this.setVisible(true);
+	}
+
+	private void r() {
 		try {
-			final RServiNodeConfig rConfig = new RServiNodeConfig();
+			RServiNodeConfig rConfig = new RServiNodeConfig();
 			rConfig.setRHome(R_PATH);
 			String policyFile = Main.class.getResource("java.policy").getFile();
 			rConfig.setJavaArgs(rConfig.getJavaArgs() + " " + "-Djava.security.policy=file://" + policyFile);
-			rConfig.setJavaArgs(rConfig.getJavaArgs() + " " + "-Djava.security.manager ");
-			rConfig.setJavaArgs(rConfig.getJavaArgs() + " " + "-Dde.walware.rj.rpkg.path=/home/marek/R/x86_64-pc-linux-gnu-library/3.2/rj");
+			rConfig.setJavaArgs(rConfig.getJavaArgs() + " " + "-Djava.security.manager");
+			rConfig.setJavaArgs(rConfig.getJavaArgs() + " " + "-Dde.walware.rj.rpkg.path=" + RJ_PATH);
 
 			rConfig.addToClasspath(NodeController.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
 			rConfig.addToClasspath(AbstractServerControl.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
@@ -84,19 +122,19 @@ public class Main {
 			nodeFactory.setConfig(rConfig);
 
 			EmbeddedRServiManager newEmbeddedR = RServiImplE.createEmbeddedRServi("pool", registry, nodeFactory);
-			RServi fRservi = RServiUtil.getRServi(newEmbeddedR, "xx-test");
+			this.fRservi = RServiUtil.getRServi(newEmbeddedR, "xx-test");
 
 			double rValue = 1001;
 			int nValue = 100;
 
-			FunctionCall massCall = fRservi.createFunctionCall("library");
+			FunctionCall massCall = this.fRservi.createFunctionCall("library");
 			massCall.add("package", "MASS");
 			massCall.evalVoid(null);
-			fRservi.evalVoid("mu <- c(0,0)", null);
-			fRservi.evalVoid("r <- " + (rValue-1001)/1001, null);
-			fRservi.evalVoid("n <- " + nValue, null);
-
-			fRservi.close();
+			this.fRservi.evalVoid("mu <- c(0,0)", null);
+			this.fRservi.evalVoid("r <- " + (rValue-1001)/1001, null);
+			this.fRservi.evalVoid("n <- " + nValue, null);
+			makePlot();
+			this.fRservi.close();
 		} catch (Exception e1) {
 			e1.printStackTrace();
 
@@ -113,7 +151,42 @@ public class Main {
 //			System.out.println(StringUtils.join(st, "\n"));
 //			e1.printStackTrace();
 		}
-		System.out.println("END");
 	}
 
+	public void makePlot(){
+		try {
+			FunctionCall mvrnormCall = this.fRservi.createFunctionCall("mvrnorm");
+			mvrnormCall.add("n", "n");
+			mvrnormCall.add("mu", "mu");
+
+			this.fRservi.evalVoid("sigma <- matrix(rep(r, 4), ncol = 2)", null);
+			this.fRservi.evalVoid("diag(sigma) <- c(1,1)", null);
+			this.fRservi.evalVoid("xy <- mvrnorm(n = n, mu = mu, Sigma = sigma)", null);
+
+			// plot(x = xy[,1], y = xy[,2], ylab = "", xlab = "")
+
+			PngGraphic pngGraphic = new PngGraphic();
+			pngGraphic.setSize(w, h, Graphic.UNIT_PX);
+
+			FunctionCall plotFun = fRservi.createFunctionCall("eqscplot");
+			plotFun.add("x", "xy[,1]");
+			plotFun.add("y", "xy[,2]");
+			plotFun.addChar("xlab", "");
+			plotFun.addChar("ylab", "");
+
+			byte[] plot = pngGraphic.create(plotFun, fRservi, null);
+			final BufferedImage img = ImageIO.read(new ByteArrayInputStream(plot));
+
+			gPanel = new JPanel() { private static final long serialVersionUID = 1L;
+				@Override public void paintComponent(Graphics g) {
+					super.paintComponent(g);
+						g.drawImage(img, 0, 0, null);
+				}
+			};
+			mainPane.add(gPanel, BorderLayout.CENTER);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 }
