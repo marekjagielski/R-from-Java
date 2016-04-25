@@ -70,42 +70,11 @@ public class Main extends JFrame {
 			rConfig.setJavaArgs(rConfig.getJavaArgs() + " " + "-Djava.security.policy=file://" + policyFile);
 			rConfig.setJavaArgs(rConfig.getJavaArgs() + " " + "-Djava.security.manager");
 			rConfig.setJavaArgs(rConfig.getJavaArgs() + " " + "-Dde.walware.rj.rpkg.path=" + RJ_PATH);
+			rConfig.setJavaArgs(rConfig.getJavaArgs() + " " + "-Dde.walware.rj.debug");
 
 			rConfig.addToClasspath(NodeController.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
 			rConfig.addToClasspath(AbstractServerControl.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
 			rConfig.addToClasspath(RJIOExternalizable.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
-
-
-
-//			List<String> site = new LinkedList<>();
-//			List<String> libs = new LinkedList<>();
-//			List<String> libsusr = new LinkedList<>();
-//
-//			setLibs(site, rConfig, "R_LIBS_SITE");
-//			setLibs(libs, rConfig, "R_LIBS");
-//			setLibs(libsusr, rConfig, "R_LIBS_USER");
-//
-//	        ClassLoader sysClassLoader = ClassLoader.getSystemClassLoader();
-//	        URL[] urls = ((URLClassLoader) sysClassLoader).getURLs();
-//	        for(URL u : urls) rConfig.addToClasspath(u.getFile());
-//	        rConfig.setBaseWorkingDirectory("/home/marek/Projects/systemInCloudModeler/runtime-EclipseApplication/xxx/target");
-//
-//			rConfig.setJavaArgs(rConfig.getJavaArgs() + " " + "-Djava.rmi.server.hostname=localhost ");
-//
-//			rConfig.setJavaArgs(rConfig.getJavaArgs() + " " + "-Drjava.class.path=" + "/home/marek/Projects/systemInCloudModeler/eclipse/plugins/de.walware.rj.server_2.0.4.b201511061600E44sw.jar");
-//			rConfig.setJavaArgs(rConfig.getJavaArgs() + " " + "-Drjava.path=" + "/home/marek/R/x86_64-pc-linux-gnu-library/3.2/rjava");
-//			rConfig.setJavaArgs(rConfig.getJavaArgs() + " " + "-Djava.rmi.server.codebase=" + "file:///home/marek/R/x86_64-pc-linux-gnu-library/3.2/rjava/java");
-//			rConfig.setJavaArgs(rConfig.getJavaArgs() + " " + "-Djava.rmi.server.useCodebaseOnly=true");
-//			rConfig.setJavaArgs(rConfig.getJavaArgs() + " " + "-Drjava.rjavalibs=" + "");
-//			rConfig.setJavaArgs(rConfig.getJavaArgs() + " " + "-Drjava.jrilibs=" + "/home/marek/R/x86_64-pc-linux-gnu-library/3.2/rJava/jri");
-//			System.out.println(rConfig.getJavaArgs());
-//			rConfig.setEnableVerbose(true);
-//			System.getenv().put("R_LIBS_USER", "/home/marek/R/x86_64-pc-linux-gnu-library/3.2");
-//			this.r_arch = getNonEmpty(System.getenv("R_ARCH"), System.getProperty("r.arch"));
-//			this.r_libs_site = checkDirPathList(System.getenv("R_LIBS_SITE"));
-//			this.r_libs_user = checkDirPathList(System.getenv("R_LIBS_USER"));
-//			this.r_libs = checkDirPathList(System.getenv("R_LIBS"));
-//  		System.setSecurityManager(new SecurityManager());
 
 			ERJContext context = new ERJContext();
 			ECommons.init("dummy_id", new ECommons.IAppEnvironment() {
@@ -124,6 +93,8 @@ public class Main extends JFrame {
 			EmbeddedRServiManager newEmbeddedR = RServiImplE.createEmbeddedRServi("pool", registry, nodeFactory);
 			this.fRservi = RServiUtil.getRServi(newEmbeddedR, "xx-test");
 
+			this.fRservi.evalVoid("cat(\"Hello from R\")", null);
+
 			double rValue = 1001;
 			int nValue = 100;
 
@@ -135,6 +106,7 @@ public class Main extends JFrame {
 			this.fRservi.evalVoid("n <- " + nValue, null);
 			makePlot();
 			this.fRservi.close();
+			newEmbeddedR.stop();
 		} catch (Exception e1) {
 			e1.printStackTrace();
 
