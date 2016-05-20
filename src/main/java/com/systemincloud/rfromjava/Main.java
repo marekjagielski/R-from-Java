@@ -70,7 +70,6 @@ public class Main extends JFrame {
 			rConfig.setJavaArgs(rConfig.getJavaArgs() + " " + "-Djava.security.policy=file://" + policyFile);
 			rConfig.setJavaArgs(rConfig.getJavaArgs() + " " + "-Djava.security.manager");
 			rConfig.setJavaArgs(rConfig.getJavaArgs() + " " + "-Dde.walware.rj.rpkg.path=" + RJ_PATH);
-			rConfig.setJavaArgs(rConfig.getJavaArgs() + " " + "-Dde.walware.rj.debug");
 
 			rConfig.addToClasspath(NodeController.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
 			rConfig.addToClasspath(AbstractServerControl.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
@@ -93,6 +92,10 @@ public class Main extends JFrame {
 			EmbeddedRServiManager newEmbeddedR = RServiImplE.createEmbeddedRServi("pool", registry, nodeFactory);
 			this.fRservi = RServiUtil.getRServi(newEmbeddedR, "xx-test");
 
+			PrintOutServer.INSTACE.start();
+//			CallbackServer.INSTANCE.start(this.id, this);
+			this.fRservi.evalVoid("sink(socketConnection(host = \"localhost\", port = " + PrintOutServer.INSTACE.getPort() + ", blocking = TRUE, open = \"w\"))", null);
+
 			this.fRservi.evalVoid("cat(\"Hello from R\")", null);
 
 			double rValue = 1001;
@@ -105,23 +108,12 @@ public class Main extends JFrame {
 			this.fRservi.evalVoid("r <- " + (rValue-1001)/1001, null);
 			this.fRservi.evalVoid("n <- " + nValue, null);
 			makePlot();
+
+			PrintOutServer.INSTACE.start();
 			this.fRservi.close();
 			newEmbeddedR.stop();
 		} catch (Exception e1) {
 			e1.printStackTrace();
-
-//			StackTraceElement[] st = e1.getStackTrace();
-//			System.out.println(e1.getMessage());
-//			System.out.println(StringUtils.join(st, "\n"));
-//			Throwable e2 = e1.getCause();
-//			st = e2.getStackTrace();
-//			System.out.println(e2.getMessage());
-//			System.out.println(StringUtils.join(st, "\n"));
-//			Throwable e3 = e2.getCause();
-//			st = e3.getStackTrace();
-//			System.out.println(e3.getMessage());
-//			System.out.println(StringUtils.join(st, "\n"));
-//			e1.printStackTrace();
 		}
 	}
 
