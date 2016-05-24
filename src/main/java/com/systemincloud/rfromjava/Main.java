@@ -18,6 +18,7 @@ import de.walware.ecommons.IDisposable;
 import de.walware.ecommons.net.RMIRegistry;
 import de.walware.ecommons.net.RMIUtil;
 import de.walware.rj.data.RJIOExternalizable;
+import de.walware.rj.data.RObject;
 import de.walware.rj.server.srvImpl.AbstractServerControl;
 import de.walware.rj.server.srvext.ERJContext;
 import de.walware.rj.servi.RServi;
@@ -98,6 +99,7 @@ public class Main extends JFrame {
 
 			this.fRservi.evalVoid("cat(\"Hello from R\")", null);
 
+
 			double rValue = 1001;
 			int nValue = 100;
 
@@ -107,7 +109,21 @@ public class Main extends JFrame {
 			this.fRservi.evalVoid("mu <- c(0,0)", null);
 			this.fRservi.evalVoid("r <- " + (rValue-1001)/1001, null);
 			this.fRservi.evalVoid("n <- " + nValue, null);
+
 			makePlot();
+
+
+			// assignment -------------
+        	RObject values = fRservi.evalData("values <- c(4L, 5L)", null);
+        	RObject dims = fRservi.evalData("values <- c(1, 2)", null);
+
+			FunctionCall fun = fRservi.createFunctionCall("array");
+			fun.add("data", values);
+			fun.add("dim", dims);
+			RObject rdata = fun.evalData(null);
+			System.out.println(rdata);
+			this.fRservi.assignData("x", rdata, null);
+			// assignment -------------
 
 			PrintOutServer.INSTACE.start();
 			this.fRservi.close();
