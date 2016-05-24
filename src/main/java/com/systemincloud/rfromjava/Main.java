@@ -114,8 +114,8 @@ public class Main extends JFrame {
 
 
 			// assignment -------------
-        	RObject values = fRservi.evalData("values <- c(4L, 5L)", null);
-        	RObject dims = fRservi.evalData("values <- c(1, 2)", null);
+			RObject values = fRservi.evalData("values <- c(4L, 5L)", null);
+			RObject dims = fRservi.evalData("values <- c(1, 2)", null);
 
 			FunctionCall fun = fRservi.createFunctionCall("array");
 			fun.add("data", values);
